@@ -146,7 +146,7 @@
       font-size: 15px;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
   <div class="container">
@@ -163,7 +163,7 @@
   <script>
     const SUPABASE_URL = 'https://tjalxebrjpvkbezvjrrx.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqYWx4ZWJyanB2a2JlenZqcnJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2ODg0ODcsImV4cCI6MjA4NjI2NDQ4N30.vfKBtR40MU-_Vo24a1rHB475pK4nb9E4rUsiG94-iSY';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let items = [];
 
@@ -205,7 +205,7 @@
     }
 
     async function loadItems() {
-      const { data, error } = await supabase
+      const { data, error } = await sb
         .from('shopping_items')
         .select('*')
         .order('created_at', { ascending: true });
@@ -220,7 +220,7 @@
       if (!name) return;
       input.value = '';
       input.focus();
-      const { error } = await supabase
+      const { error } = await sb
         .from('shopping_items')
         .insert({ name, checked: false });
       if (!error) await loadItems();
@@ -229,7 +229,7 @@
     async function toggleItem(id) {
       const item = items.find(i => i.id === id);
       if (!item) return;
-      const { error } = await supabase
+      const { error } = await sb
         .from('shopping_items')
         .update({ checked: !item.checked })
         .eq('id', id);
@@ -237,7 +237,7 @@
     }
 
     async function deleteItem(id) {
-      const { error } = await supabase
+      const { error } = await sb
         .from('shopping_items')
         .delete()
         .eq('id', id);

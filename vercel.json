@@ -1,6 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/api/items", "destination": "/api/items" },
-    { "source": "/api/items/:id", "destination": "/api/items/[id]" }
-  ]
-}

@@ -146,7 +146,6 @@
       font-size: 15px;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
   <div class="container">
@@ -161,10 +160,6 @@
   </div>
 
   <script>
-    const SUPABASE_URL = 'https://tjalxebrjpvkbezvjrrx.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqYWx4ZWJyanB2a2JlenZqcnJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2ODg0ODcsImV4cCI6MjA4NjI2NDQ4N30.vfKBtR40MU-_Vo24a1rHB475pK4nb9E4rUsiG94-iSY';
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
     let items = [];
 
     const listEl = document.getElementById('list');
@@ -205,14 +200,9 @@
     }
 
     async function loadItems() {
-      const { data, error } = await sb
-        .from('shopping_items')
-        .select('*')
-        .order('created_at', { ascending: true });
-      if (!error) {
-        items = data;
-        render();
-      }
+      const res = await fetch('/api/items');
+      items = await res.json();
+      render();
     }
 
     async function addItem() {
@@ -220,28 +210,28 @@
       if (!name) return;
       input.value = '';
       input.focus();
-      const { error } = await sb
-        .from('shopping_items')
-        .insert({ name, checked: false });
-      if (!error) await loadItems();
+      await fetch('/api/items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+      await loadItems();
     }
 
     async function toggleItem(id) {
       const item = items.find(i => i.id === id);
       if (!item) return;
-      const { error } = await sb
-        .from('shopping_items')
-        .update({ checked: !item.checked })
-        .eq('id', id);
-      if (!error) await loadItems();
+      await fetch(`/api/items/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ checked: !item.checked })
+      });
+      await loadItems();
     }
 
     async function deleteItem(id) {
-      const { error } = await sb
-        .from('shopping_items')
-        .delete()
-        .eq('id', id);
-      if (!error) await loadItems();
+      await fetch(`/api/items/${id}`, { method: 'DELETE' });
+      await loadItems();
     }
 
     loadItems();

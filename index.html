@@ -146,6 +146,7 @@
       font-size: 15px;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div class="container">
@@ -160,7 +161,11 @@
   </div>
 
   <script>
-    let items = JSON.parse(localStorage.getItem('shoppingList') || '[]');
+    const SUPABASE_URL = 'https://tjalxebrjpvkbezvjrrx.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqYWx4ZWJyanB2a2JlenZqcnJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2ODg0ODcsImV4cCI6MjA4NjI2NDQ4N30.vfKBtR40MU-_Vo24a1rHB475pK4nb9E4rUsiG94-iSY';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let items = [];
 
     const listEl = document.getElementById('list');
     const emptyEl = document.getElementById('empty');
@@ -171,8 +176,10 @@
       if (e.key === 'Enter' && !e.isComposing) addItem();
     });
 
-    function save() {
-      localStorage.setItem('shoppingList', JSON.stringify(items));
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
 
     function render() {
@@ -181,51 +188,63 @@
 
       const checked = items.filter(i => i.checked).length;
       statsEl.textContent = items.length > 0
-        ? `총 ${items.length}개 / 완료 ${checked}개`
+        ? `\ucd1d ${items.length}\uac1c / \uc644\ub8cc ${checked}\uac1c`
         : '';
 
-      items.forEach((item, idx) => {
+      items.forEach((item) => {
         const li = document.createElement('li');
         if (item.checked) li.classList.add('checked');
 
         li.innerHTML = `
-          <div class="checkbox" onclick="toggleItem(${idx})"></div>
+          <div class="checkbox" onclick="toggleItem('${item.id}')"></div>
           <span class="name">${escapeHtml(item.name)}</span>
-          <button class="delete-btn" onclick="deleteItem(${idx})">&times;</button>
+          <button class="delete-btn" onclick="deleteItem('${item.id}')">&times;</button>
         `;
         listEl.appendChild(li);
       });
     }
 
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
+    async function loadItems() {
+      const { data, error } = await supabase
+        .from('shopping_items')
+        .select('*')
+        .order('created_at', { ascending: true });
+      if (!error) {
+        items = data;
+        render();
+      }
     }
 
-    function addItem() {
+    async function addItem() {
       const name = input.value.trim();
       if (!name) return;
-      items.push({ name, checked: false });
       input.value = '';
       input.focus();
-      save();
-      render();
+      const { error } = await supabase
+        .from('shopping_items')
+        .insert({ name, checked: false });
+      if (!error) await loadItems();
     }
 
-    function toggleItem(idx) {
-      items[idx].checked = !items[idx].checked;
-      save();
-      render();
+    async function toggleItem(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      const { error } = await supabase
+        .from('shopping_items')
+        .update({ checked: !item.checked })
+        .eq('id', id);
+      if (!error) await loadItems();
     }
 
-    function deleteItem(idx) {
-      items.splice(idx, 1);
-      save();
-      render();
+    async function deleteItem(id) {
+      const { error } = await supabase
+        .from('shopping_items')
+        .delete()
+        .eq('id', id);
+      if (!error) await loadItems();
     }
 
-    render();
+    loadItems();
   </script>
 </body>
 </html>
